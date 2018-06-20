@@ -1,0 +1,17 @@
+\section{Objectives} \label{sec:obj1}
+
+This study concerns the construction and analysis of a program that applies swept time-space decomposition to explicit stencil computations intended for distributed memory systems with heterogeneous architecture, that is, computational operations are performed by several CPUs and co-processors, in particular Nvidia GPUs.
+The software is written in \CC{} and CUDA and uses the Message Passing Interface (MPI) library~\cite{Clarke1994} to communicate between CPU processes and the CUDA API to communicate between the GPU and the CPU.
+
+While stencil computation is a relatively simple procedure, applying linear operations to individual spatial
+points and their neighbors and the complexities introduced both by a heterogeneous architecture and swept
+time-space decomposition require a significant number of design decisions.
+In this work we investigated the performance impact of the most immediately salient and configurable decisions,
+and constrained other potential variations with reasonable or previously investigated values.
+Our investigations focus on answering the following questions:
+\begin{enumerate}
+    \item Does the swept rule reduce time-cost under optimal launch bounds over the domain of grid sizes?
+    \item How much work should we give to the GPU in a heterogeneous system?
+    \item How should we decompose the stencils in multi-step methods? (Further discussion in Section~\ref{sec:hPrimaryData})
+    \item Does the size of the domain of dependence substantially affect performance?
+\end{enumerate}

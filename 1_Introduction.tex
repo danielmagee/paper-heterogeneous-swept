@@ -1,0 +1,49 @@
+\section{Introduction}
+
+Computational fluid dynamics simulations are at the heart of technological development in industries vital to high and rising standards of living around the world.
+Performing simulations at a level of fidelity necessary for insight consumes more resources
+than individual workstations can reasonably accommodate.
+As a result, they are generally performed on clusters of many nodes comprising several
+multi-core CPUs---and increasingly with other specialized ``accelerator'' co-processors.
+These heterogeneous computing systems have become ubiquitous in areas of research dependent
+on large amounts of data, complex numerical transformations, or densely connected systems of
+constraints.
+Addressing these problems reveals a further horizon where new, more complex questions emerge.
+Steady progress requires increasing development in large-scale computational systems; solutions from hardware and software are required to supply the necessary throughput for demand in numerous fields, including several not known for their reliance on computational science such as medical diagnostics, genetics, marketing and biology.
+
+In many ways, progress has been sustained through the development of accelerators or co-processors which augment the computational capabilities of the CPU, including general purpose graphics processing units (GPGPU).
+These devices have grown in power and complexity over the last decade, leading to an increasing
+reliance on them for energy-efficient floating-point processing power in clusters~\cite{ALEXANDROV20161}.
+However, as clusters grow in complexity, computational power, and physical size, latency and bandwidth
+costs limit the performance of applications that require regular inter-node communication.
+Bandwidth is the amount of memory that can be communicated per unit of time, and latency is the
+fixed cost of a communication event---the travel time of the leading bit over the connection.
+Traditionally, solving partial differential equations (PDEs) using explicit schemes on
+clusters involves domain decomposition, with required internode communication of small
+data packets for boundary information at every time step.
+The frequency of these communication events renders their fixed cost (i.e., latency) a
+significant barrier to the scalability and robustness of stencil update algorithms on
+large multi-node computing systems.
+
+This project seeks to address, however nascently, two of the challenges on the route to
+exascale computing systems identified by Alexandrov in his editorial in a recent special issue of the
+\textit{Journal of Computational Science}:
+the need for ``novel mathematical methods\dots{} to hide network and memory latency, have very
+high computation\slash communication overlap, have minimal communication, have fewer synchronization points'',
+and ``mathematical methods developed and corresponding scientific algorithms need to match these
+architectures [standard processors and GPGPUs] to extract the most performance. This includes
+different system-specific levels of parallelism as well as co-scheduling of computation''~\cite{ALEXANDROV20161}.
+
+In this paper, we describe the development and performance analysis of a PDE solver targeting
+heterogeneous computing systems (i.e., CPU\slash GPU) using the swept rule, a communication-avoiding,
+latency-hiding domain decomposition scheme~\cite{alhubail:16jcp,Alhubail:2016arxiv}.
+Section~\ref{sec:hRwork} describes recent work on domain decomposition schemes with particular
+attention to applications involving PDEs and heterogeneous systems.
+Section~\ref{sec:obj1} describes the questions this study seeks to answer.
+Section~\ref{sec:hMethods} introduces swept time-space decomposition and discusses the experimental
+hardware, procedure, and factors used to evaluate the program performance.
+The section also analyzes and justifies the design decisions we made concerning elements
+of the program which we held constant but could potentially have investigated.
+In Section~\ref{sec:hResults} we present the results of the tests and describe the hardware
+and the testing procedures used; lastly in Section~\ref{sec:hConc} we draw further conclusions,
+describe future challenges in this project, and outline plans for prioritizing and overcoming them.

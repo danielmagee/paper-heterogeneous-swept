@@ -1,0 +1,183 @@
+%% PARCFD PAPER FOR JOURNAL SUBMISSION:
+% TARGETS IN ORDER
+% https://www.journals.elsevier.com/computer-physics-communications
+% https://www.journals.elsevier.com/future-generation-computer-systems
+% https://www.journals.elsevier.com/computers-and-fluids
+
+% That's a fine journal and all. Very similar metrics to JCP.
+% BUT Computer Physics Communications is really right up the alley here since I've made what could be considered a framework and it has much better metrics than the other two.  And their acceptance rate was 41% last year.
+
+%% Paper on novel parallel decomposition method for accelerating 1D simulations on GPU architecture.
+\pdfoutput=1
+\pdfminorversion=5 % necessary for EES
+%
+\documentclass[12pt,number,sort&compress,preprint]{elsarticle}
+
+% better printing of numbers
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{textcomp}
+\usepackage{booktabs,multicol}
+
+\usepackage[hyphens]{url}
+\biboptions{sort&compress, square, comma}
+\usepackage[breaklinks=true, linkcolor=blue, citecolor=blue, colorlinks=true]{hyperref}
+
+\usepackage{latexsym, amsmath, amssymb}
+\usepackage{graphicx, color, xcolor, wrapfig, subcaption}
+\usepackage{listings}
+
+\usepackage{nicefrac}
+
+\usepackage[binary-units]{siunitx}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ADDING LINENUMBERS FOR REVIEWING:
+\usepackage{lineno}
+
+\sisetup{group-separator={,},
+	detect-all,
+	binary-units,
+	list-units = single,
+	range-units = single,
+	range-phrase = --,
+	per-mode = symbol-or-fraction,
+	separate-uncertainty = true,
+	multi-part-units = single,
+	list-final-separator = {, and }
+%    scientific-notation = fixed
+}
+
+\newcommand{ \ddt } [1] { \frac{ \partial #1 }{ \partial t } }
+\newcommand{ \ddx } [1] { \frac{ \partial }{ \partial #1 } }
+\newcommand{ \dydx } [2] { \frac{ \partial #1 }{ \partial #2 } }
+\newcommand{ \ddydxx } [2] { \frac{ \partial^2 #1 }{ \partial #2^2 } }
+\newcommand{ \us } [0] {\textunderscore}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+  language=C,
+  breaklines=true,
+  columns=flexible,
+  basicstyle=\tiny \ttfamily,
+  backgroundcolor=\color{white},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  frame=single,
+  tabsize=2,
+  captionpos=b,
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+}
+
+% C++ macro
+\def\CC{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\footnotesize ++}}}
+
+
+%disable
+\usepackage[textsize=footnotesize]{todonotes}
+\setlength{\marginparwidth}{2cm}
+
+\graphicspath{ {images/} }
+
+% Define commands to assure consistent treatment throughout document
+\newcommand{\eqnref}[1]{(\ref{#1})}
+\newcommand{\class}[1]{\texttt{#1}}
+\newcommand{\package}[1]{\texttt{#1}}
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\BibTeX}{\textsc{Bib}\TeX}
+
+%\newcommand{\TheAuthors}{Daniel J.~Magee and Kyle E.~Niemeyer}
+%\headers{GPU-based swept time-space decomposition}{\TheAuthors}
+
+
+\usepackage[normalem]{ulem}
+
+\newcommand{\hfigs}[5]{
+    \begin{figure}[!tb]
+        \centering
+        \begin{subfigure}[t]{.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{#1}
+            \caption{#3}
+            \label{f:#1}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[t]{.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{#2}
+            \caption{#4}
+            \label{f:#2}
+        \end{subfigure}
+        \caption{#5}
+        \label{f:#1Result}
+    \end{figure}
+}
+
+\def\WCPU{Intel Xeon 2630-E5 v3}
+\def\WGPU{Nvidia Tesla K40c}
+\def\CCPU{Intel Xeon 2660-E5 v3}
+\def\CGPU{Nvidia Tesla K40m}
+
+\newcommand{\tx}[1]{$#1\times$}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Applying the swept rule for explicit PDE solutions on heterogeneous computing systems}
+
+\author[OSU]{Daniel J.~Magee}
+\author[OSU]{Kyle E.~Niemeyer\corref{cor1}}
+\ead{kyle.niemeyer@oregonstate.edu}
+
+\cortext[cor1]{Corresponding author}
+\address[OSU]{School of Mechanical, Industrial, and Manufacturing Engineering,
+Oregon State University, Corvallis, OR, USA
+}
+
+% We present recent work on the swept rule, a domain decomposition strategy for explicit solutions to partial differential equations, on heterogeneous, distributed architectures, in particular those commonly found on compute clusters containing GPGPU accelerators.
+\begin{abstract}
+    \input{0_Abstract.tex}
+\end{abstract}
+
+\begin{keyword}
+    Domain decomposition \sep Heterogeneous computing \sep partial differential equations \sep computational fluid dynamics \sep communication-avoiding algorithms
+\end{keyword}
+
+\end{frontmatter}
+
+% FOR REVIEWING
+\linenumbers
+
+\input{1_Introduction.tex}
+
+\input{2_RelatedWork.tex}
+
+\input{3_Objectives.tex}
+
+\input{3_Methodology.tex}
+
+% \input{4_Implementation.tex}
+
+\input{5_Results.tex}
+
+\input{6_Conclusions.tex}
+
+\section*{Acknowledgments}
+
+This material is based upon work supported by NASA under award No.~NNX15AU66A
+under the technical monitoring of Drs.~Eric Nielsen and Mujeeb Malik.
+We also gratefully acknowledge the support of Nvidia Corporation for donated
+Tesla K40c GPU used for this research.
+
+\section*{References}
+\bibliographystyle{elsarticle-num}
+\bibliography{paper-heterogeneous-swept}
+
+\end{document}

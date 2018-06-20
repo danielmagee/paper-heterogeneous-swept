@@ -1,0 +1,11 @@
+
+Applications that exploit high performance computing (HPC) systems have become invaluable in academia and industry over the past two decades.
+The most important development of the last decade in HPC from the hardware perspective has been the General Purpose Graphics Processing Unit (GPGPU), a class of massively parallel devices that now contributes a substantial balance of the computational power in the top 500 supercomputers.
+As these systems grow, barriers to increased performance arise from small costs accumulated over innumerable iterations such as latency, the fixed cost of memory accesses, which becomes significantly larger when access requires communication between two distant CPU processes.
+The time-space decomposition rule is a communication-avoiding technique for time-stepping stencil
+update formulas that attempts to sidestep a significant amount of latency costs.
+This work extends the swept rule by targeting heterogeneous, CPU\slash GPU architectures
+representative of current and future HPC systems.
+We compare our approach to a naive decomposition scheme with two test equations using an MPI+CUDA pattern on 40 processes over two nodes containing one GPU.
+We show that the swept rule produces a \SIrange{4}{18}{$\times$} speedup with the heat equation and a \SIrange{1.5}{3}{$\times$} speedup on the Euler equations using the same processors and work distribution.
+These results demonstrate the effectiveness of the swept rule for different levels of problem complexity on compute systems that incur a substantial portion of their overall cost from latency.
