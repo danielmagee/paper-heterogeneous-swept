@@ -15,8 +15,7 @@ It requires more memory to be used in the primary data structure; for instance, 
 of the Euler equations carried six doubles per spatial point since the pressure ratio used by the
 limiter was rolled into the flattened step.
 These strategies are described in Figures~\ref{f:Longpseudo} and ~\ref{f:flatPseudo}.
-By restricting the stencil to three points, the \texttt{lengthening} method requires the pressure ratio
-to be stored and passed through the memory hierarchy meaning the data structure carries seven doubles per spatial point for the Euler equation.
+By restricting the stencil to three points, the \texttt{lengthening} method requires the pressure ratio to be stored and passed through the memory hierarchy meaning the data structure carries seven doubles per spatial point for the Euler equation.
 
 \begin{figure}[bt]
     \begin{minipage}[t]{0.48\textwidth}
@@ -67,7 +66,8 @@ to be stored and passed through the memory hierarchy meaning the data structure 
 \end{figure}
 
 To gauge the influence of this change in primary data structure, we implemented each combination of the classic and swept decomposition techniques using the \texttt{flattening} and \texttt{lengthening} data structures.
-
+We applied these solvers to the Euler equations using the conditions and hardware described in Section~\ref{sec:ExpMethod}.
+These programs use a single GPU as the sole computational device as opposed to the other results in this paper, which are evaluated with CPUs and GPUs on a heterogeneous platform.  
 
 \hfigs{SpeedupAtomicArrayEuler}
 {SpeedupAlgoAtomicArrayEuler}
@@ -84,25 +84,17 @@ To gauge the influence of this change in primary data structure, we implemented 
 
 Figure~\ref{f:SpeedupAtomicArrayEulerResult} compares the performance of the memory storage techniques in an
 experiment executed on a workstation with an \WCPU{} and an \WGPU{}.
-The \texttt{Classic} program using the \texttt{flattening} method using is compared to the same program using the \texttt{lengthening} method and likewise for \texttt{Swept}.
-As Figure~\ref{f:lflat} shows, the \texttt{flattening} method is faster than \texttt{lengthening} for both decomposition methods and gets faster as the number of spatial points increases.
+The \texttt{Classic} program using the \texttt{flattening} method using is compared to the same program using the \texttt{lengthening} method and likewise for \texttt{Swept}. %----%
+As Figure~\ref{f:SpeedupAtomicArrayEuler} shows, the \texttt{flattening} method is faster than \texttt{lengthening} for both decomposition methods and gets faster as the number of spatial points increases.
 There is not much difference in the trends between swept and classic decomposition methods, but it does appear that the less performative data structure affects the \texttt{Swept} program more.
-Much of the reason that \texttt{lengthening} is substantially less performative
-is an artifact of GPU architecture, so it is difficult to generalize the results of this study to
-heterogeneous systems. GPU memory accesses, from global and shared memory, are more sensitive to
-irregularities because of the parallel nature of the device as a whole; it is not designed to be used serially.
-The extra memory requirements of the \texttt{lengthening} method also consume limited shared memory
-resources on the GPU, which diminishes the L1 cache capacity used to accelerate global memory accesses
-on Kepler-generation GPUs.
+Much of the reason that \texttt{lengthening} is substantially less performative is an artifact of GPU architecture, so it is difficult to generalize the results of this study to heterogeneous systems. 
+GPU memory accesses, from global and shared memory, are more sensitive to irregularities because of the parallel nature of the device as a whole; it is not designed to be used serially.
+The extra memory requirements of the \texttt{lengthening} method also consume limited shared memory resources on the GPU, which diminishes the L1 cache capacity used to accelerate global memory accesses on Kepler-generation GPUs.
 While locality is a significant issue for effective CPU memory accesses, it has a larger impact on GPU performance.
 
-We feel that it is important to present these findings so that others who implement the swept rule will
-have a more thorough understanding of the tradeoffs inherent in the program design choices across architectures.
-But, since the \texttt{Swept} and \texttt{Classic} algorithms perform similarly compared to the
-\texttt{flattening} method, the conclusions we derive from our experiments using the \texttt{lengthening}
-method remain valid.
-And we believe that, in this case, the values that the \texttt{lengthening} method provides:
-extensibility and regularity are of greater value than the absolute best performance.
+We feel that it is important to present these findings so that others who implement the swept rule will have a more thorough understanding of the tradeoffs inherent in the program design choices across architectures.
+But, since the \texttt{Swept} and \texttt{Classic} algorithms perform similarly compared to the \texttt{flattening} method, the conclusions we derive from our experiments using the \texttt{lengthening} method remain valid.
+And we believe that, in this case, the values that the \texttt{lengthening} method provides: extensibility and regularity are of greater value than the absolute best performance.
 
 \subsection{Program design features}
 
