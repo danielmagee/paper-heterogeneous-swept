@@ -11,10 +11,8 @@ This strategy is more memory efficient for the working array which contains inst
 It also introduces additional complexity from parsing the arrays and requires additional register memory for function and kernel arguments and ancillary variables.
 
 In the new implementation shown here we use the \texttt{lengthening} strategy, also referred to as ``atomic decomposition'', which is instantiated as a struct to generalize the stages into a user-defined data type~\cite{WangDecomp}.
-It requires more memory to be used in the primary data structure; for instance, our \texttt{flattening} version
-of the Euler equations carried six doubles per spatial point since the pressure ratio used by the
-limiter was rolled into the flattened step.
-These strategies are described in Figures~\ref{f:Longpseudo} and ~\ref{f:flatPseudo}.
+It requires more memory to be used in the primary data structure; for instance, our \texttt{flattening} version of the Euler equations carried six doubles per spatial point since the pressure ratio used by the limiter was rolled into the flattened step.
+These strategies are described in Figures~\ref{f:Longpseudo} and ~\ref{f:flatPseudo}. 
 By restricting the stencil to three points, the \texttt{lengthening} method requires the pressure ratio to be stored and passed through the memory hierarchy meaning the data structure carries seven doubles per spatial point for the Euler equation.
 
 \begin{figure}[bt]
@@ -66,14 +64,14 @@ By restricting the stencil to three points, the \texttt{lengthening} method requ
 \end{figure}
 
 To gauge the influence of this change in primary data structure, we implemented each combination of the classic and swept decomposition techniques using the \texttt{flattening} and \texttt{lengthening} data structures.
-We applied these solvers to the Euler equations using the conditions and hardware described in Section~\ref{sec:ExpMethod}.
+We applied these solvers to the Euler equations using the discretization and conditions described in Section~\ref{sec:ExpMethod}.
 These programs use a single GPU as the sole computational device as opposed to the other results in this paper, which are evaluated with CPUs and GPUs on a heterogeneous platform.  
 
 \hfigs{SpeedupAtomicArrayEuler}
 {SpeedupAlgoAtomicArrayEuler}
 {Speedup of \texttt{flattening} compared to the same scheme using \texttt{lengthening}.}
-{Speedup of \texttt{Swept} program compared to \texttt{Classic} using the \texttt{flattening} and \texttt{lengthening} strategies}
-{Performance comparison of the \texttt{flattening} and \texttt{lengthening} strategies using the Euler equations on the GPU only.}
+{Speedup of \texttt{Swept} program compared to \texttt{Classic} using each data structure strategy.}
+{Performance comparison of the \texttt{flattening} and \texttt{lengthening} strategies solving the Euler equations on a single GPU.}
 
 % \begin{figure}[htbp]
 %     \centering
@@ -84,17 +82,23 @@ These programs use a single GPU as the sole computational device as opposed to t
 
 Figure~\ref{f:SpeedupAtomicArrayEulerResult} compares the performance of the memory storage techniques in an
 experiment executed on a workstation with an \WCPU{} and an \WGPU{}.
-The \texttt{Classic} program using the \texttt{flattening} method using is compared to the same program using the \texttt{lengthening} method and likewise for \texttt{Swept}. %----%
-As Figure~\ref{f:SpeedupAtomicArrayEuler} shows, the \texttt{flattening} method is faster than \texttt{lengthening} for both decomposition methods and gets faster as the number of spatial points increases.
-There is not much difference in the trends between swept and classic decomposition methods, but it does appear that the less performative data structure affects the \texttt{Swept} program more.
-Much of the reason that \texttt{lengthening} is substantially less performative is an artifact of GPU architecture, so it is difficult to generalize the results of this study to heterogeneous systems. 
-GPU memory accesses, from global and shared memory, are more sensitive to irregularities because of the parallel nature of the device as a whole; it is not designed to be used serially.
-The extra memory requirements of the \texttt{lengthening} method also consume limited shared memory resources on the GPU, which diminishes the L1 cache capacity used to accelerate global memory accesses on Kepler-generation GPUs.
+Figure~\ref{f:SpeedupAtomicArrayEuler} shows the speedup, the ratio of the average time per timestep, of a \texttt{lengthening} implementation compared to a \texttt{flattening} implementation for each domain decomposition scheme.
+Figure~\ref{f:SpeedupAlgoAtomicArrayEuler} describes the effect that the choice of primary data structure has on the main quantity of interest in this project: the speedup of a \texttt{Swept} compared to a \texttt{Classic} program.
+
+Figure~\ref{f:SpeedupAtomicArrayEuler} shows that the \texttt{flattening} strategy is faster than \texttt{lengthening} for both decomposition methods, and the speedup grows as the number of spatial points increases, but this performance difference and trend is more pronounced in a \texttt{Classic} program than a \texttt{Swept} one.
+Much of the reason that \texttt{lengthening} is less performative for both decomposition methods--the performance sensitivity to irregularity in memory access patterns amplified by the array of sturctures used in \texttt{lengthening}--is particular to GPU architecture,  so it is difficult to generalize the results in this section to heterogeneous systems. 
+The extra memory requirements of the \texttt{lengthening} method also consume limited shared memory resources on the GPU, which diminishes occupancy, the number of threads active on the GPU at any given time, in the \texttt{Swept} program and the L1 cache capacity used to accelerate global memory accesses on Kepler-generation GPUs in the \texttt{Classic} program.
 While locality is a significant issue for effective CPU memory accesses, it has a larger impact on GPU performance.
 
-We feel that it is important to present these findings so that others who implement the swept rule will have a more thorough understanding of the tradeoffs inherent in the program design choices across architectures.
-But, since the \texttt{Swept} and \texttt{Classic} algorithms perform similarly compared to the \texttt{flattening} method, the conclusions we derive from our experiments using the \texttt{lengthening} method remain valid.
-And we believe that, in this case, the values that the \texttt{lengthening} method provides: extensibility and regularity are of greater value than the absolute best performance.
+These issues explain the general benefit of the \texttt{flattening} strategy, but they do not explain why these benefits are more pronounced in the \texttt{Classic} program.
+First, the \texttt{lengthening} strategy, which requires more sub-timesteps per timestep in order to limit the stencil to three points, does not affect the number of kernels launches in the \texttt{Swept} program, but may increase the occurrence of these events in the \texttt{Classic} program.
+In the case of the Euler equations, there are four sub-timesteps per timestep in our scheme using \texttt{lengthening} which is reduced to two with the \texttt{flattening} strategy; this causes the \texttt{Classic lengthening} program to launch twice as many kernels as it would with \texttt{flattening}. 
+Also, the aforementioned structure of arrays paradigm used in the \texttt{lengthening} strategy increases the stride for memory accesses which has little effect on the \texttt{Swept} program since it uses mostly shared memory and this access pattern does not produce bank conflicts, but it does prevent global memory accesses from coalescing which is a significant portion of the \texttt{Classic} program cost.
+
+Figure~\ref{f:SpeedupAlgoAtomicArrayEuler} shows what we found in our previous study of the Euler equations using the \texttt{flattening} method~\cite{OurJCP}.
+It also shows that if we had used the \texttt{lengthening} strategy, we would have found that the swept decomposition scheme does provide a benefit compared to classic.
+In any experimental algorithm, especially those involving emerging, parallel computational platforms, performance is dependent to various degrees on a multitude of implmentation details, and we feel that it is important to present these findings so that others who implement the swept rule will have a more thorough understanding of the tradeoffs inherent in particular program design choices.
+In this case we have subjectively determined that the benefits the \texttt{lengthening} method provides: extensibility and regularity are of greater value than the absolute best performance.
 
 \subsection{Program design features}
 
