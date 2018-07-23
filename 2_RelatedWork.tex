@@ -1,34 +1,28 @@
 
 \section{Related Work} \label{sec:hRwork}
 
-In our previous work~\cite{OurJCP} we investigated methods for exploiting the exposed GPU memory
-hierarchy to effectively execute swept time-space decomposition for stencil computation on a single GPU.
-Alhubail et al.~\cite{MaithamRepo, alhubail:16jcp, Alhubail:2016arxiv} first developed
-the swept rule for CPU-based operation one and two dimensions; Alhubail and Wang also demonstrated
-how complex schemes can be decomposed into update formulas suitable for the swept rule~\cite{WangDecomp}.
-We use this technique, or ``\texttt{lengthening}'', in the implementation of the swept rule discussed in this work,
-and contrast it with another method for dealing with complex schemes:
-``\texttt{flattening}'', which our previous GPU-only swept rule implementation used~\cite{OurJCP}.
-Section~\ref{sec:hPrimaryData} quantitatively compares the two techniques.
-In addition, Alhubail and Wang applied this procedure to automatically generate C source code for
-solving the heat and Kuramoto--Sivashinsky equations using the swept rule on CPU-based systems~\cite{AIAAWang}.
-These articles---those written by Alhubail and Wang and our previous study---comprise the body of work
-on the swept rule to date, which this work expands upon.
+In our previous work~\cite{OurJCP} we investigated methods for exploiting the memory hierarchy on a single GPU in a swept time-space solver for stencil computations. 
+Alhubail et al.~\cite{MaithamRepo, alhubail:16jcp, Alhubail:2016arxiv} first developed the swept rule for CPU-based operation in one and two dimensions; Wang also demonstrated how complex numerical schemes can be decomposed into ``atomic'' update formulas, a series of steps requiring only a three-point stencil, suitable for the swept rule~\cite{WangDecomp}.
+We use this technique, which we refer to as ``\texttt{lengthening}'', in the implementation of the swept rule discussed in this work
+and contrast it with another method for dealing with complex schemes, ``\texttt{flattening}'', which we used in our previous GPU-only used~\cite{OurJCP}.
+Section~\ref{sec:hPrimaryData} quantitatively compares the two techniques. 
+In addition, Alhubail and Wang applied this procedure to automatically generate C source code for solving the heat and Kuramoto--Sivashinsky equations using the swept rule on CPU-based systems~\cite{AIAAWang}.
+These articles comprise the body of work on the swept rule to date, which this paper expands upon.
 
-Memory hierarchies are defined by a series of locations where memory is scarce and quickly accessible to plentiful and inefficient.
-By storing the working data in memory more accessible to the processor as long as possible, communication-avoiding algorithms speed up computation by reducing inter-process communication or global memory accesses in parallel programs.
-Swept time-space decomposition is a type communication-avoiding algorithm because it seeks to reduce the number of communication events between processor and less accessible memory resources, unlike most communication-avoiding algorithms though, it does not perform redundant communications.
+Memory hierarchies are defined by a series of locations where memory is scarce and fast to plentiful and slow.
+By working on data in the limited fast memory space as long as possible, communication-avoiding algorithms accelerate computation by reducing inter-process communication or global memory access cost in parallel programs.
+Swept time-space decomposition is a type communication-avoiding algorithm because it seeks to reduce the number of communication events between the processor and less accessible memory resources.
+Unlike most communication-avoiding algorithms though, it does not perform redundant operations.
 The heterogeneous communication-avoiding LU factorization algorithm presented by Baboulin et al.~\cite{BABOULIN201217} investigates the task splitting between the GPU and CPU and minimizes inter-device communication.
-Their results show an appreciable benefit by splitting the types of tasks performed on the CPU and GPU, reducing overall communication, and effectively overlapping computation and communication.
+Their results show an appreciable benefit from splitting the types of tasks performed on the CPU and GPU, which reduces overall communication and effectively overlaps computation and communication.
 
 Studies of stencil optimization techniques over the last decade often address concerns closely related to the work presented here.
-Datta et al.~\cite{VolkovDatta2008} explored domain decomposition with various launch parameters on various heterogeneous architectures and nested domain decomposition within levels of the memory hierarchy.
-Malas et al.~\cite{MalasHager} previously explored similar diamond tiling methods, which use the data dependency of the grid to improve cache usage.
+Datta et al.~\cite{VolkovDatta2008} explored domain decomposition with various launch parameters on heterogeneous architectures and nested domain decomposition within levels of the memory hierarchy.
+Malas et al.~\cite{MalasHager} previously explored similar diamond tiling methods by using the data dependency of the grid to improve cache usage.
 
-Swept time-space decomposition is also conceptually related to parallel-in-time methods~\cite{Gander2015},
-such as multigrid-reduction-in-time~\cite{falgout2014parallel}.
-These algorithms overcome the interdependence of solutions in the time domain, and parallelize the time dimension as if spatial.
-The technique iterates over a series of fine and course grids using an initial guess for the entire solution domain, and effectively smoothes out the errors in the solution.
+Swept time-space decomposition is also conceptually related to parallel-in-time methods~\cite{Gander2015}, such as multigrid-reduction-in-time~\cite{falgout2014parallel}.
+These algorithms overcome the interdependence of solutions in the time domain in order to parallelize it as if it were spatial.
+This technique iterates over a series of fine and coarse grids using an initial guess for the entire solution domain and effectively smoothes out the errors in the solution.
 Historically, parallel-in-time methods were considered unsuitable for nonlinear problems since the use of coarse grids substantially degraded efficiency and accuracy~\cite{alhubail:16jcp}.
 However, recent developments applying optimization and auto-tuning techniques have matched the scaling of linear solvers~\cite{MGRITImprove}.
 Parareal is a parallel-in-time method that solves multiple time steps in parallel on a fine grid
@@ -36,14 +30,8 @@ and corrects the results on a coarse grid until the solution converges, resultin
 Wu and Zhou proposed a new local time-integrator for this method that shows considerable promise
 for accelerating convergence rates in fractional differential equations~\cite{PararealWu}.
 
-Distributed, remote, multi-node systems have become the centers of scientific computing
-over the last decade, and have become increasingly heterogeneous in recent years.
+As these distributed, remote, multi-node systems and have become increasingly heterogeneous in recent years, implementing CFD codes effecively on these systems grown more complex.
 Therefore, domain decomposition on these systems has received a good deal of recent attention.
-In particular, Huerta et al. used methods from process engineering, including experimental design
-and non-continuous linear models in an experimental parameter space paradigm, to investigate
-the performance of a well known benchmark used to rank HPC clusters, HPL, with respect to workload division
-on a heterogeneous system~\cite{DOEbenchmarks}.
-From our perspective, this is an underused technique in the field of HPC, which
-we could apply to great effect in future studies with a more mature code base.
-However, at our current stage, such a thoroughgoing analysis would not provide actionable
-insights beyond what we have already gleaned from our comparatively simpler methods.
+In particular, Huerta et al. used methods from process engineering, including experimental design and non-continuous linear models in an experimental parameter space paradigm, to investigate the performance of a well known benchmark used to rank HPC clusters, HPL, with respect to workload division on a heterogeneous system~\cite{DOEbenchmarks}.
+This technique shows considerable promise and could be considered for future studies of the swept rule with a more mature code base.
+However, at our current stage, such a thoroughgoing analysis would not provide actionable insights beyond what we have already gleaned from our comparatively simpler methods.
