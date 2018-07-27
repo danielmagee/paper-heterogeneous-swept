@@ -1,0 +1,37 @@
+\subsection{Swept Decomposition} \label{sec:hSweptDecomp}
+
+The swept rule exhausts the domain of dependence---the portion of the space-time grid that can be solved given a set of initial values, referred to here as a ``block''---before passing the grid points on the borders of each process.
+We refer to the program that implements the swept rule as \texttt{Swept}, and the program that uses naive domain decomposition, that is passing between processes at each timestep, is referred to as \texttt{Classic}.
+This way the simulation may continue until no spatial points have available stencils; the required values may then be passed to the neighboring process (i.e., neighboring subdomain) in a single communication event.
+Both Alhubail and Wang, and Magee and Niemeyer, provide detailed explanations and graphical depictions
+of the swept rule in one dimension, for various architectures~\cite{alhubail:16jcp, OurJCP}.
+
+The heterogeneous one-dimensional swept rule begins by partitioning the computational grid and
+allocating space for the working array in each process.
+In this case, the working array is of type \texttt{states}, a plain old data C struct that contains the
+dependent and intermediate variables needed to continue the procedure from any time step.
+Working array size is determined by the number of domains of dependence controlled by the process,
+$nBlocks$, and the number of spatial points covered by a domain of dependence, $tpb$ (threads per block).
+Here we use ``block'' to represent a domain of dependence; it comes from the GPU\slash CUDA
+construct representing a collection of threads.
+The program allocates space for $nBlocks \times tpb + (tpb+2)/2$ spatial points and initializes the
+first $nBlocks \times tpb + 2$ points.
+The initialized points require two extra slots so the edge domains
+can build a full domain width on their first step.
+Interior domains in the process share their edges with their neighbors; there is no risk of
+race conditions since even the simplest numerical scheme requires at least two values in the
+\texttt{state} struct, which allows the procedure to alternate reading and writing those values.
+Therefore, even as a domain writes on an edge data point that its neighbor must read,
+the value the neighbor requires is not modified.
+
+The first cycle completes when each domain has progressed to the sub-time step $tpb/2$
+where it has computed two values at the center of the spatial domain.
+At this point each process passes the first $tpb/2 + 1$ values in its array to the left neighboring process.
+Each process receives the neighbor's buffer and places it in the last $tpb/2 + 1$ slots; that is, starting at the $nBlocks \times tpb$ index.
+It proceeds by performing the same computation on the centerpoints, starting at global index $tpb-1$ (adjusted index $tpb/2-1$), of the new array and filling in the uncomputed grid points at successive sub-time steps with a widening spatial window until it reaches a sub-time step that has not been explored at any spatial point and proceeds with a contracting window.
+Geometrically, the first cycle completes a triangle, the second completes a diamond.
+When the diamond is complete, it passes the last $tpb/2 + 1$ time steps in the array and inputs the received buffer starting at position 0.
+Now it performs the diamond procedure again, this time the global and adjusted index are identical and it starts at index $tpb/2 - 1$.
+
+The procedure continues in this fashion until the final time step is reached, at which point it stops after the expanding window reaches the domain width and outputs the solution which is now current at the same time step within and across all domains and processes.
+Therefore, the triangle functions are only used twice if no intermediate time step results are output, the rest of the cycles are completed in a diamond shape.

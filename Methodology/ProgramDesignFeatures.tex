@@ -1,0 +1,66 @@
+\subsection{Program design features} \label{sec:ProgDesign}
+
+Our earlier implementation of the swept rule for GPUs~\cite{OurJCP} required creating separate single-file
+\CC{}\slash CUDA programs for each problem.
+We have determined that this approach is insufficient for enabling the support for further exploration that is essential to the accurate analysis of highly architecture
+and problem dependent algorithms.
+Our previous analysis showed that the performance characteristics of the GPU-based swept rule depend
+on the boundary conditions, numerical method, and governing equation(s).
+In this work we endeavor to create a convenient and reusable interface through which other can reproduce our experiments, explore different equations and numerical methods to examine performance characteristics the performance characteristics of the swept rule.
+
+We have created this interface by separating the domain decomposition and grid generation, and passing
+a map between the equation-specific part of the code, defined by the user, and the generic part of the code.
+In practice, the user defines an initialization procedure that defines any constant terms in the
+governing equation(s), e.g., the Fourier number in the heat equation.
+The user is guaranteed to receive the standard grid variables, e.g., $\Delta x$, $\Delta t$, in the map
+along with any other values needed to define the constant terms, i.e., the thermal diffusivity
+for the heat equation.
+The user defines these non-standard constant terms in a JSON file passed to the program on the command line
+or as command line key/value pair arguments. By defining these fundamental concepts in a separate JSON
+file, variables that define the grid or material constants in the equations can be redefined without
+the need to recompile.
+
+This structure requires a solver interface that operates on every equation and numerical scheme
+the same way, which in turn requires the use of a different strategy for decomposing more complex
+equations and domains.
+The clearest way to create a general form for a user-defined equation is to oblige the user to decompose
+the numerical formula into atomic stages, a series of steps requiring only three-point stencils as described
+by Wang~\cite{WangDecomp}, and provide a step counter in the root function to define the sequence of stages.
+The user must also define the data structure where results of each stage are collected, this structure takes the form of a plain old data struct named \texttt{states}.
+
+Our first study showed that shared memory is the most effective means of exploiting the memory hierarchy
+for this application on this generation of GPUs~\cite{OurJCP}.
+We rely on this conclusion here to again use the GPU characteristics to determine the size of the
+domains of dependence.
+Each GPU thread is mapped to a single spatial point and each CPU process, having only one available thread,
+traverses a number of domains in serial.
+This limits the size of the domain of dependence to the allowable number of threads in each block launched
+in the GPU kernel, which depends on the occupancy of the most-restrictive kernel as determined by the shared
+memory and register resource requirements.
+
+
+Our approach organizes the available processors by assigning each GPU on a node to one
+MPI process (i.e., CPU core) on the same node that has exclusive control over it; that process also
+manages one domain on either side of the GPU subdomain.
+Thus, to facilitate this, each MPI process comprises a positive, even number of subdomains.
+All subdomains on a node must contain the same number of points, and all MPI processes evaluate the
+same number of subdomains.
+Processes that control a GPU simply ``contain'' additional subdomains equal to the GPU affinity times
+the number of domains assigned to an MPI process.
+For example, a domain of 160 points could be decomposed into subdomains of 16 points on a node with
+four CPU cores and one GPU; each processor would compute the time-stepping for two subdomains, while the
+MPI process controlling the GPU comprises four subdomains in total (two on the CPU, and two on the GPU).
+This corresponds to a GPU affinity of one, since the GPU subdomain equals the CPU subdomain sizes.
+
+Assigning a GPU to a single process reduces complexity and avoids using the GPU at the spatial
+boundaries where imposing boundary conditions causes thread divergence.
+This is useful from a conceptual standpoint, even though we previously found that boundary
+conditions only affect GPU performance in a minor way~\cite{OurJCP}.
+
+Our program uses the MPI\allowbreak+CUDA paradigm, and assigns one MPI process to each core for the life of a program.
+We considered using an MPI\allowbreak+OMP\allowbreak+CUDA paradigm by assigning an MPI process to each socket, and
+launching threads from each process to occupy the individual cores, but recent work has shown that
+this approach rarely improves performance on clusters of limited size for finite volume or finite
+difference solvers~\cite{IDAHO_MPI_CUDA, PerfAnalysisHetero}.
+This conclusion has led widely used libraries, such as PETSc, to opt against a paradigm of threading
+within processes~\cite{MillsPetsc}.
