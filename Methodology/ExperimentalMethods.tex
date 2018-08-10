@@ -2,12 +2,11 @@
 \subsection{Experimental method} \label{sec:ExpMethod}
 
 We endeavor to address the questions presented in Section~\ref{sec:obj1} by varying
-three primary attributes of the decomposition: threads per block, GPU affinity, and grid size.
-We repeatedly executed our two test equations, the heat and Euler equations, over the
-experimental domain of these variables using \texttt{Swept} and \texttt{Classic}, exchanging borders every
-sub-time step, decomposition methods.
-In our program implementing the swept rule in one-dimension on heterogeneous systems, hSweep,
-threads per block is synonymous with the size of the domain-of-dependence, but we refer to it using GPU terminology because each domain is launched as a block of threads on the GPU.
+three elements of the decomposition: block size (the number of spatial points in each domain), GPU affinity (the number of spatial points assigned to a GPU as a multiple of the number assigned to a process), and grid size.
+We repeatedly executed our two test equations, the heat equation and Euler equations, over the
+experimental domain of these variables using the swept and classic, exchanging borders every
+sub-timestep, decomposition methods.
+In our swept program in one-dimension for heterogeneous systems, hSweep, the size of the domain-of-dependence or ``block'' is synonymous with threads per block, because each domain is launched as a block of threads on the GPU with each thread corresponding to a spatial point.
 A block is an abstract grouping of threads that share an execution setting, a streaming multiprocessor, and access to a shared memory space, a portion of the GPU L1 cache.
 hSweep uses the swept rule to avoid communication between devices and processes and exploits the
 GPU memory hierarchy to operate on shared memory quantities closer to the processor.

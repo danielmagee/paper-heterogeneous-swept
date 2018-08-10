@@ -35,3 +35,11 @@ Now it performs the diamond procedure again, this time the global and adjusted i
 
 The procedure continues in this fashion until the final time step is reached, at which point it stops after the expanding window reaches the domain width and outputs the solution which is now current at the same time step within and across all domains and processes.
 Therefore, the triangle functions are only used twice if no intermediate time step results are output, the rest of the cycles are completed in a diamond shape.
+
+Our program uses the MPI\allowbreak+CUDA paradigm and assigns one MPI process to each core.
+We considered using an MPI\allowbreak+OMP\allowbreak+CUDA paradigm by assigning an MPI process to each socket and
+launching threads from each process to occupy the individual cores, but recent work has shown that
+this approach rarely improves performance on clusters of limited size for finite volume or finite
+difference solvers~\cite{IDAHO_MPI_CUDA, PerfAnalysisHetero}.
+This conclusion has led widely used libraries, such as PETSc, to opt against a paradigm of threading
+within processes~\cite{MillsPetsc}.

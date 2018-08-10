@@ -1,9 +1,9 @@
 
 \subsection{Swept Decomposition}  \label{sec:SweptDecompRslt}
 
-All programs executed at least \num{4000} timesteps; they were compiled with CUDA v8 and \texttt{gcc v4.8.5}.
-All programs were launched with \texttt{mpirun v3.1.4}.
-Host-side memory management, grid generation, and initial conditions are not included in the timing measurement, but the measurement includes device-side global memory allocation and initial and final memory transfer between the host and device.
+All programs were compiled with the CUDA compiler \texttt{nvcc v8} and launched with \texttt{mpirun v3.1.4}.
+Our study collects the average time per timestep over \num{4000} timesteps; 
+The timing measurements include the onetime costs of device memory allocation and initial and final host-device memory transfers, this does not include the time cost of host-side memory management, grid generation, file I/O and initial condition calculations.
 The heterogeneous swept rule algorithms and test cases were implemented in \texttt{hSweep v2.0}~\cite{hSweepz}.
 
 \hfigs{BestRuntimeHeat}
@@ -18,34 +18,32 @@ The heterogeneous swept rule algorithms and test cases were implemented in \text
 {Speedup of swept version at best launch condition.}
 {Performance comparison of the hSweep Euler equations programs.}
 
-We obtained the results presented here by running the \texttt{Classic} and \texttt{Swept}
+We performed the tests on the \texttt{Classic} and \texttt{Swept}
 programs on two nodes of the Oregon State University College of Engineering cluster.
-Each node contains two sockets with~\CCPU{} processors containing ten cores each operating at~\SI{2.60}{\giga\hertz}.
+Each node contains two sockets with~\CCPU{} processors with ten cores each operating at~\SI{2.60}{\giga\hertz}.
 An~\CGPU{} GPGPU is available to one of these nodes through a PCI connection.
 
-Figure~\ref{f:BestRuntimeHeat} compares the computational time cost per time step
-of the \texttt{Classic} and \texttt{Swept} algorithms applied to the heat equation.
+Figure~\ref{f:BestRuntimeHeat} compares the computational time cost per timestep of the heat equation programs
+using the \texttt{Classic} and \texttt{Swept} algorithms.
 These results are generally consistent with our expectations for several reasons.
-First, we observe that in all previous experiments~\cite{OurJCP, alhubail:16jcp},
-\texttt{Swept} achieves a period of strong speedup but reaches its asymptotic performance
-at smaller grid sizes than \texttt{Classic}.
-For \texttt{Classic} this occurs relatively soon after \texttt{Swept}, and the time cost of both algorithms with respect to grid size grows similarly so the relative speedup of \texttt{Swept} declines as well although the absolute speedup remains constant.
+First, we have observed that in previous studies~\cite{OurJCP, alhubail:16jcp}, that
+\texttt{Swept} programs applied to simpler problems are highly performative when the processes operate but reach that
+capacity at smaller grid sizes than \texttt{Classic} programs.
+This difference in the capacity for increasing grid sizes narrows the performance advantage of \texttt{Swept} swiftly, and, since both algorithms scale similarly with grid size, the relative speedup of \texttt{Swept} declines as well although the absolute speedup remains constant.
 
-Second, although the minimum grid size in this study is about \tx{100} times larger
-than our previous study, and the maximum grid size is about \tx{10} times larger,
-Figure~\ref{f:BestSpeedupHeat} shows a remarkably similar trend in the speedup of swept decomposition.
+Second, although the minimum grid size in this study is about \tx{100} larger
+than our previous study, and the maximum grid size is about \tx{10} larger,
+Figure~\ref{f:BestSpeedupHeat} shows a similar trend in the speedup of swept decomposition.
 In general the speedup exhibited by the heterogeneous case is \tx{2} the speedup at the analogous grid size in the GPU-only case over the experimental range.
-The relative speedup of the swept rule is expected since the latency that our program avoids is a much larger cost in internode communication.
+This relative speedup of the heterogeneous swept rule is expected since latency is a much larger cost in internode communication than within the GPU memory hierarchy or between the CPU and GPU. 
 
 Figure~\ref{f:BestRuntimeEulerResult} compares the time cost per timestep of the \texttt{Classic} and \texttt{Swept} algorithms with the Euler equations and shows the same performance trends as the heat equation.
 In this case, the communication costs that the program avoids are significant enough that swept decomposition provides a tangible benefit despite the extra complexity, management, and memory resources that it requires.
 This shows that swept time-space domain decomposition is a viable method for complex equations in one dimension on systems with substantial communication costs and various architectures.
 
 Figures~\ref{f:EulerContours} and~\ref{f:HeatContours} show contour maps of the results
-of the complete experiment, as described at the end of Section~\ref{sec:ExpMethod}, on the equations.
-By creating similar maps in the first stage of the experiment, we were able to narrow the range of possible best affinity values for all experimental settings and run an experiment with greater granularity in the affinity dimension.
-In the interest of most accurately describing the performance of our program, we present the results of the final rather than the screening experiment.
-
+of the complete experiment, as described at the end of Section~\ref{sec:ExpMethod}.
+By creating similar maps in the first stage of the experiment, we were able to narrow the range of experimental variables to capture the best performance for each problem, algorithm, and grid size.
 Figure~\ref{f:EulerContours} shows interesting characteristics of the programs that vary by runtime configuration and decomposition method.
 Notably, these results show that for the Euler equations, the \texttt{Swept} program often achieves best performance at GPU affinities between \numrange{45}{55} and often does best with \num{768} grid points in the domain of dependence, but performs particularly poorly with \num{512} points.
 From other perspectives the performance profile of the \texttt{Swept} Euler equations program appears quite regular, so a sudden drop in performance followed by a substantial increase is unexpected.
@@ -54,12 +52,10 @@ While the saddle along the threads per block axis is problematic for our
 general recommendations, we also observe that the program consistently exhibits similar performance from~\numrange{192}{384} threads per block.
 
 Additionally, we observe from these maps that \texttt{Swept} produces a more orderly performance profile than \texttt{Classic}.
-For grid sizes under \num{e6} spatial points, the classic decomposition technique produce peaks and valleys over a wide range of threads per block and GPU affinities.
-On larger grids, that chaos regularizes and the best performance occurs with smaller grids and larger GPU affinities.
-This suggests that we may have truncated the GPU affinity dimension prematurely in our experiments; however, from our observations we conclude that the best performance is well approximated by the experimental grid and that the most performative configuration overall will not lie far outside of the grid if it does.
-The regularity we observe in the experimental grid for \texttt{Swept} programs also extends in the grid size dimension as described by Figures~\ref{f:BestRuntimeHeatResult} and \ref{f:BestRuntimeEulerResult} where swept decomposition produces a nearly perfect power law curve for each problem.
-These figures show a significant improvement for \texttt{Swept} programs over \texttt{Classic} ones.
-This relative advantage diminishes with greater problem sizes, but for the heat equation,  Figure~\ref{f:BestSpeedupHeat} shows an \tx{18} speedup at \num{5e5} spatial points falling to about a \tx{4} speedup at \num{e7}.
+For grids with less than \num{e6} spatial points, the classic decomposition technique produce peaks and valleys over a wide range of block sizes sizes and GPU affinities.
+On larger grids, that disorder regularizes and the best performance occurs with smaller blocks and larger GPU affinities.
+This suggests that we may have truncated the GPU affinity dimension prematurely in our experiments.
+The regularity we observe in the experimental grid for \texttt{Swept} programs also extends in the grid size dimension as described by Figures~\ref{f:BestRuntimeHeatResult} and \ref{f:BestRuntimeEulerResult} show swept decomposition produces a nearly perfect power law curve for each problem quantified in Table~\ref{tab:tablefit}.
 
 \begin{figure}[htbp]
     \centering

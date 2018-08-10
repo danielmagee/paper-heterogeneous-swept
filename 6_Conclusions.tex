@@ -6,17 +6,16 @@ These design choices are: how many threads per block---i.e., points per domain--
 what proportion of the total domain to assign to a GPU, and how to efficiently and generally
 store the working array throughout the simulation.
 
-Our study aimed to answer the primary questions concerning these design choices laid out in Section~\ref{sec:obj1}.
+We aimed to answer the primary questions concerning these design choices laid out in Section~\ref{sec:obj1}.
 First, we found that the best number of points to assign to each domain varies with the
 algorithm, governing equation(s), and grid size.
 To achieve the best performance on repeated similar runs, any program should be tested
 over a limited number of time steps and tuned to the best result;
-however, in general we recommend choosing a per-process domain size value from \SIrange{96}{384}
-that is a multiple of \num{32}.
+however, in general we recommend choosing a block size that is a multiple of \num{32} between \SIrange{96}{384}.
 This is consistent with our previous results for the GPU-only implementation of the swept rule.
 Next, we concluded that while a GPU affinity is best chosen after a similar tuning experiment,
-for more complex equations an affinity from \SIrange{40}{60} performs well and an affinity
-from \SIrange{20}{40} does best for simpler problems.
+for more complex problms an affinity from \SIrange{40}{60} performs well and simpler problems perform best with an affinity
+between \SIrange{20}{40}.
 Next, there is a significant tradeoff between extensibility and performance associated with the primary data structure and compression scheme applied to the working quantity in the simulation.
 We choose to continue working with the \texttt{lengthening} method despite its performance drawbacks
 because it simplifies development substantially and has facilitated the development of this framework with which we can continue to develop codes and tests based on the swept rule.
@@ -27,5 +26,5 @@ using a fine-tuned GPU-only program~\cite{OurJCP}.
 Future work in this project will continue adapting the swept rule to higher dimensions, architecture types, and grid formations.
 For example, while Alhubail and Wang demonstrated the two-dimensional swept rule for CPU-based clusters~\cite{Alhubail:2016arxiv}, we have not yet extended this to heterogeneous systems.
 In addition, we recognize the need to develop new experiments that examine the scaling characteristics of the program as additional computational resources are added.
-We plan on and executing those experiments on cloud systems like Amazon Web Services, Microsoft Azure, or Nvidia GPU Cloud. 
-As we conduct these experiments, we hope to gain greater insight into the factors affecting performance and develop a more robust performance model for the swept rule.
+We plan on executing those experiments on cloud systems like Amazon Web Services, Microsoft Azure, or Nvidia GPU Cloud. 
+As we conduct these experiments, we hope to gain greater insight into the factors affecting performance and develop a more robust performance model for swept time-space decomposition.

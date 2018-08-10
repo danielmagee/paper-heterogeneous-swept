@@ -1,7 +1,7 @@
 \subsection{Program design features} \label{sec:ProgDesign}
 
-Our earlier implementation of the swept rule for GPUs~\cite{OurJCP} required creating separate single-file
-\CC{}\slash CUDA programs for each problem.
+Our earlier implementation of the swept rule targeted individual GPUs and required creating separate single-file
+\CC{}\slash CUDA programs for each problem~\cite{OurJCP}.
 We have determined that this approach is insufficient for enabling the support for further exploration that is essential to the accurate analysis of highly architecture
 and problem dependent algorithms.
 Our previous analysis showed that the performance characteristics of the GPU-based swept rule depend
@@ -57,10 +57,4 @@ boundaries where imposing boundary conditions causes thread divergence.
 This is useful from a conceptual standpoint, even though we previously found that boundary
 conditions only affect GPU performance in a minor way~\cite{OurJCP}.
 
-Our program uses the MPI\allowbreak+CUDA paradigm, and assigns one MPI process to each core for the life of a program.
-We considered using an MPI\allowbreak+OMP\allowbreak+CUDA paradigm by assigning an MPI process to each socket, and
-launching threads from each process to occupy the individual cores, but recent work has shown that
-this approach rarely improves performance on clusters of limited size for finite volume or finite
-difference solvers~\cite{IDAHO_MPI_CUDA, PerfAnalysisHetero}.
-This conclusion has led widely used libraries, such as PETSc, to opt against a paradigm of threading
-within processes~\cite{MillsPetsc}.
+
